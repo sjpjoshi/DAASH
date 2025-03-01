@@ -1,0 +1,1 @@
+ALTER TABLE "verification_table" ADD COLUMN "content" text;
