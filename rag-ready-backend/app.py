@@ -27,7 +27,6 @@ def is_trusted_source(url):
         # Parse the URL to extract the domain
         parsed_url = urlparse(url)
         domain = parsed_url.netloc
-
         # Check if the domain ends with a trusted extension
         if any(domain.endswith(ext) for ext in TRUSTED_EXTENSIONS):
             return "Trusted"
