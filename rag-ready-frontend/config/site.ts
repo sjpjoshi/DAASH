@@ -7,11 +7,11 @@ export const siteConfig = {
   navItems: [
     {
       label: "Augmented Chat",
-      href: "/Chat",
+      href: "/AugmentedChat",
     },
     {
       label: "Document Data",
-      href: "/TrustData",
+      href: "/DocumentData",
     },
   ],
   navMenuItems: [
@@ -21,11 +21,11 @@ export const siteConfig = {
     },
     {
       label: "Augmented Chat",
-      href: "/Chat",
+      href: "/AugmentedChat",
     },
     {
       label: "Document Data",
-      href: "/TrustData",
+      href: "/DocumentData",
     },
   ],
   links: {
