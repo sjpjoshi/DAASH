@@ -6,63 +6,33 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import json
 import re
+import dotenv
+import os
+import psycopg2
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
+# Load environment variables
+dotenv.load_dotenv()
 
 # Initialize Flask app and CORS
 app = Flask(__name__)
 CORS(app)
 
-openai.api_key = ''
+# Set the OpenAI API key from environment variables
+openai.api_key = os.getenv("")
 
-# List of trusted domain extensions
-TRUSTED_EXTENSIONS = ['.gov', '.org']
+# Database connection string from environment
+DATABASE_URL = os.getenv("")
 
-# Function to check if a webpage is from a trusted source based on its domain
-def is_trusted_source(url):
+# Function to establish database connection
+def get_db_connection():
     try:
-        # Parse the URL to extract the domain
-        parsed_url = urlparse(url)
-        domain = parsed_url.netloc
-        
-        # Check if the domain ends with a trusted extension
-        if any(domain.endswith(ext) for ext in TRUSTED_EXTENSIONS):
-            return "Trusted"
-        else:
-            return "Untrusted"
+        conn = psycopg2.connect(DATABASE_URL)
+        return conn
     except Exception as e:
-        return f"Error checking source: {e}"
-
-# Function to extract text from a webpage
-def extract_text_from_webpage(url):
-    try:
-        response = requests.get(url)
-        soup = BeautifulSoup(response.text, 'html.parser')
-
-        # Remove common non-content elements like ads, navigation, scripts, etc.
-        for element in soup.select('nav, footer, header, aside, .ads, .advertisement, script, style, [class*="banner"], [class*="menu"], [id*="menu"], [class*="nav"], [id*="nav"]'):
-            element.decompose()
-            
-        # Look for main content containers first (such as <main>, <article>, etc.)
-        main_content = soup.select_one('main, article, [role="main"], .main-content, #main-content, .content, #content')
-        
-        if main_content:
-            # Extract from identified main content if found
-            content = main_content
-        else:
-            # Fallback to the whole body if no main content container is found
-            content = soup.body
-            
-        # Get text from semantic elements in the content area (e.g., paragraphs, headers, lists, etc.)
-        text_elements = content.select('p, h1, h2, h3, h4, h5, h6, li, blockquote, pre, table, dl')
-        
-        # Join the text with appropriate spacing and ensure no empty text nodes are included
-        text = ' '.join([elem.get_text().strip() for elem in text_elements if elem.get_text().strip()])
-        
-        # Clean up excessive whitespace
-        text = re.sub(r'\s+', ' ', text).strip()
-
-        return text
-    except Exception as e:
-        return f"Error extracting text: {e}"
+        print(f"Error connecting to database: {e}")
+        return None
 
 # Function to interact with GPT and analyze the webpage content
 def analyze_webpage_with_gpt(text):
@@ -82,51 +52,82 @@ def analyze_webpage_with_gpt(text):
         return response.choices[0].message['content'].strip()  # Return GPT's analysis
     except Exception as e:
         return f"Error communicating with GPT: {e}"
+    
+# Function to extract text from a webpage
+def extract_text_from_webpage(url):
+    try:
+        response = requests.get(url)
+        soup = BeautifulSoup(response.text, "html.parser")
+        
+        for element in soup.select('nav, footer, header, aside, script, style'):
+            element.decompose()
+        
+        main_content = soup.select_one('main, article, [role="main"], .content, #content')
+        content = main_content if main_content else soup.body
+        text_elements = content.select("p, h1, h2, h3, h4, h5, h6, li, blockquote")
+        text = " ".join([elem.get_text().strip() for elem in text_elements if elem.get_text().strip()])
+        text = re.sub(r"\s+", " ", text).strip()
+        return text
+    except Exception as e:
+        return f"Error extracting text: {e}"
+
+# Function to retrieve verified documents from the database
+def get_verified_documents():
+    conn = get_db_connection()
+    if conn is None:
+        return []
+    
+    cursor = conn.cursor()
+    cursor.execute('SELECT common_query, content FROM content')
+    documents = [row[1] for row in cursor.fetchall()]  # Retrieve only the content for similarity check
+    cursor.close()
+    conn.close()
+    return documents
+
+# Function to compute similarity between a webpage and verified documents
+def compute_similarity(webpage_text, verified_docs, threshold=0.7, k=5):
+    vectorizer = TfidfVectorizer()
+    all_texts = [webpage_text] + verified_docs
+    tfidf_matrix = vectorizer.fit_transform(all_texts)
+    similarities = cosine_similarity(tfidf_matrix[0:1], tfidf_matrix[1:]).flatten()
+    
+    top_k_indices = similarities.argsort()[-k:][::-1]
+    top_k_similarities = [(verified_docs[i], similarities[i]) for i in top_k_indices]
+    
+    max_similarity = max(similarities) if similarities.size > 0 else 0
+    return max_similarity, top_k_similarities
 
 @app.route("/api/query", methods=["POST"])
 def query_rag():
     try:
         data = request.json
         url = data.get("url")
-
-        # Check if the webpage is from a trusted source
-        trust_status = is_trusted_source(url)
-
-        # If trusted, extract the text and analyze it with GPT
-        if trust_status == "Trusted":
-            webpage_text = extract_text_from_webpage(url)
-
-            if "Error" in webpage_text:
-                return jsonify({"error": webpage_text}), 500
-
-            # Send the extracted text to GPT for analysis
-            #analysis = analyze_webpage_with_gpt(webpage_text)
-
-            # Return the analysis result along with the trust status
-            response = {
-                "output": {
-                    "Analysis": trust_status
-                    #"GPT_Analysis": analysis
-                }
-            }
-
+        
+        # Step 1: Extract and analyze webpage content with GPT
+        webpage_text = extract_text_from_webpage(url)
+        if "Error" in webpage_text:
+            return jsonify({"error": webpage_text}), 500
+        
+        gpt_analysis = analyze_webpage_with_gpt(webpage_text)
+        if "Error" in gpt_analysis:
+            return jsonify({"error": gpt_analysis}), 500
+        
+        # Step 2: Retrieve verified documents and perform similarity check
+        verified_docs = get_verified_documents()
+        max_similarity, top_matches = compute_similarity(webpage_text, verified_docs)
+        
+        if max_similarity >= 0.7:  # Document passes similarity check
+            # Step 3: Check if it aligns with verified documents using LLM
+            if gpt_analysis.lower().find("trustworthy") != -1:
+                response = {"output": {"Analysis": "Trusted", "Matches": top_matches}}
+            else:
+                response = {"output": {"Analysis": "Untrusted", "Matches": top_matches}}
         else:
-            # If the source is not trusted, just return that it's untrusted
-            response = {
-                "output": {
-                    "Analysis": trust_status
-                }
-            }
-
-        # Step 5: Save the response to a JSON file
-        with open('output.json', 'w') as json_file:
-            json.dump(response, json_file, indent=4)
-
+            response = {"output": {"Analysis": "Untrusted", "Matches": top_matches}}
+        
         return jsonify(response)
-
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
 
 @app.route("/api/health", methods=["GET"])
 def health_check():
