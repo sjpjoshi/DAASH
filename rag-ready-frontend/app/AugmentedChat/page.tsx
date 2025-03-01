@@ -7,6 +7,7 @@ import { Button } from "@heroui/button";
 import { Popover, PopoverTrigger, PopoverContent } from "@heroui/popover";
 import { Listbox, ListboxItem } from "@heroui/listbox";
 import { Icon } from "@iconify/react";
+import ParticleConnections from "@/components/particleConnections";
 
 interface Message {
   role: "user" | "assistant";
@@ -138,8 +139,11 @@ export default function AugmentedChatPage() {
 
   return (
     <div className="flex h-full flex-col items-center justify-center">
-      <div className="flex h-full w-full max-w-[50vw] flex-col">
-        <h1 className={title({ class: "mb-6 text-center" })}>Chat with Context</h1>
+      <ParticleConnections className="absolute inset-0 z-0" />
+      <div className="relative z-10 flex h-full w-full max-w-[50vw] flex-col">
+        <h1 className={title({ class: "mb-6 text-center" })}>
+          Chat with <span className={title({ color: "violet" })}>Context</span>
+        </h1>
 
         <div className="flex flex-grow flex-col overflow-hidden rounded-lg bg-content1 shadow-md">
           {/* Chat messages area */}
@@ -147,7 +151,7 @@ export default function AugmentedChatPage() {
             {messages.map((message, index) => (
               <div
                 key={index}
-                className={`mb-4 ${message.role === "assistant" ? "bg-primary-50 dark:bg-primary-900/20" : "bg-content2"} rounded-lg p-3`}
+                className={`mb-4 ${message.role === "assistant" ? "bg-secondary-50 dark:bg-secondary-900/20" : "bg-content2"} rounded-lg p-3`}
               >
                 <div className="mb-1 font-semibold">
                   {message.role === "assistant" ? "Assistant" : "You"}
@@ -156,16 +160,16 @@ export default function AugmentedChatPage() {
               </div>
             ))}
             {isLoading && (
-              <div className="mb-4 rounded-lg bg-primary-50 p-3 dark:bg-primary-900/20">
+              <div className="mb-4 rounded-lg bg-secondary-50 p-3 dark:bg-secondary-900/20">
                 <div className="mb-1 font-semibold">Assistant</div>
                 <div className="flex items-center">
-                  <div className="mr-1 h-2 w-2 animate-bounce rounded-full bg-primary"></div>
+                  <div className="mr-1 h-2 w-2 animate-bounce rounded-full bg-secondary"></div>
                   <div
-                    className="mr-1 h-2 w-2 animate-bounce rounded-full bg-primary"
+                    className="mr-1 h-2 w-2 animate-bounce rounded-full bg-secondary"
                     style={{ animationDelay: "0.2s" }}
                   ></div>
                   <div
-                    className="h-2 w-2 animate-bounce rounded-full bg-primary"
+                    className="h-2 w-2 animate-bounce rounded-full bg-secondary"
                     style={{ animationDelay: "0.4s" }}
                   ></div>
                 </div>
@@ -223,7 +227,7 @@ export default function AugmentedChatPage() {
                     <Popover placement="top">
                       <PopoverTrigger>
                         <button
-                          className="mr-2 text-default-400 hover:text-primary"
+                          className="mr-2 text-default-400 hover:text-secondary"
                           aria-label="Add context"
                         >
                           <Icon icon="heroicons:link" className="text-lg" />
@@ -234,13 +238,13 @@ export default function AugmentedChatPage() {
                           <div className="mb-2 flex items-center justify-center">
                             <div className="flex flex-row items-center gap-2">
                               <button
-                                className={`rounded-md px-3 py-1 text-sm ${contextMode === "url" ? "bg-primary text-white" : "bg-content2"}`}
+                                className={`rounded-md px-3 py-1 text-sm ${contextMode === "url" ? "bg-secondary text-white" : "bg-content2"}`}
                                 onClick={() => setContextMode("url")}
                               >
                                 Add URL
                               </button>
                               <button
-                                className={`rounded-md px-3 py-1 text-sm ${contextMode === "docs" ? "bg-primary text-white" : "bg-content2"}`}
+                                className={`rounded-md px-3 py-1 text-sm ${contextMode === "docs" ? "bg-secondary text-white" : "bg-content2"}`}
                                 onClick={() => {
                                   setContextMode("docs");
                                   setUseTrustedDocs(true);
@@ -264,7 +268,7 @@ export default function AugmentedChatPage() {
                                     size="sm"
                                   />
                                   <Button
-                                    color="primary"
+                                    color="secondary"
                                     className="ml-2"
                                     onPress={handleAddUrl}
                                     size="sm"
@@ -285,7 +289,7 @@ export default function AugmentedChatPage() {
                                     max="3"
                                     value={trustLevel}
                                     onChange={e => setTrustLevel(parseInt(e.target.value))}
-                                    className="mr-8 flex-grow"
+                                    className="mr-8 flex-grow accent-secondary"
                                   />
                                 </div>
                                 <div className="overflow-y-auto" style={{ maxHeight: "40vh" }}>
@@ -311,7 +315,7 @@ export default function AugmentedChatPage() {
                                             <span className="max-w-[220px] truncate text-left text-sm sm:max-w-[250px]">
                                               {doc.id}
                                             </span>
-                                            <span className="ml-2 text-nowrap rounded bg-primary-100 px-1 text-right text-xs dark:bg-primary-900/30">
+                                            <span className="ml-2 text-nowrap rounded bg-secondary-100 px-1 text-right text-xs dark:bg-secondary-900/30">
                                               {getTrustLevelLabel(doc.trustLevel)}
                                             </span>
                                           </div>
@@ -330,7 +334,7 @@ export default function AugmentedChatPage() {
                 }
               />
               <Button
-                color="primary"
+                color="secondary"
                 className="ml-2"
                 onPress={handleSendMessage}
                 isDisabled={!input.trim() || isLoading}
