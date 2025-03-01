@@ -6,10 +6,6 @@ export const siteConfig = {
     "Find out what documents and sites your RAG tools can trust with RAG-Ready's API",
   navItems: [
     {
-      label: "Home",
-      href: "/",
-    },
-    {
       label: "Augmented Chat",
       href: "/Chat",
     },
