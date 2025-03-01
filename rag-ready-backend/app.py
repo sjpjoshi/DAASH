@@ -11,7 +11,7 @@ import re
 app = Flask(__name__)
 CORS(app)
 
-openai.api_key = ''  
+openai.api_key = ''
 
 # List of trusted domain extensions
 TRUSTED_EXTENSIONS = ['.gov', '.org']
@@ -71,19 +71,13 @@ def analyze_webpage_with_gpt(text):
             return "Error: The extracted text is too short for analysis."
 
         prompt = f"Please evaluate the following webpage content for factual accuracy, potential biases, and trustworthiness: {text[:4000]}"  # Trim the text if it's too long
-        
-        # Log or print the text to debug
-        print(f"Sending text to GPT: {prompt}")
-
+    
         # Send prompt to OpenAI's GPT
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",  # or another GPT model
-            messages=[{"role": "system", "content": "You are a helpful assistant."},
+            messages=[{"role": "system", "content": "You are a citation evaluator."},
                       {"role": "user", "content": prompt}]
         )
-        
-        # Log the response to help with debugging
-        print(f"GPT Response: {response}")
         
         return response.choices[0].message['content'].strip()  # Return GPT's analysis
     except Exception as e:
@@ -106,13 +100,13 @@ def query_rag():
                 return jsonify({"error": webpage_text}), 500
 
             # Send the extracted text to GPT for analysis
-            analysis = analyze_webpage_with_gpt(webpage_text)
+            #analysis = analyze_webpage_with_gpt(webpage_text)
 
             # Return the analysis result along with the trust status
             response = {
                 "output": {
-                    "Analysis": trust_status,
-                    "GPT_Analysis": analysis
+                    "Analysis": trust_status
+                    #"GPT_Analysis": analysis
                 }
             }
 
