@@ -46,7 +46,7 @@ export const ThemeSwitch: FC<ThemeSwitchProps> = ({ className, classNames }) => 
         className={slots.wrapper({
           class: clsx(
             [
-              "w-auto h-auto",
+              "h-auto w-auto",
               "bg-transparent",
               "rounded-lg",
               "flex items-center justify-center",
