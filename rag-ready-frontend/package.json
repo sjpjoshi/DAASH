@@ -27,6 +27,8 @@
     "@react-aria/visually-hidden": "3.8.19",
     "@tsparticles/react": "^3.0.0",
     "@tsparticles/slim": "^3.8.1",
+    "axios": "^1.8.1",
+    "cheerio": "^1.0.0",
     "clsx": "2.1.1",
     "dotenv": "^16.4.7",
     "drizzle-orm": "^0.40.0",

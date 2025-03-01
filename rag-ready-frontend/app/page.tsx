@@ -1,4 +1,3 @@
-import { Snippet } from "@heroui/snippet";
 import { Code } from "@heroui/code";
 
 import ParticleConnections from "@/components/particleConnections";
