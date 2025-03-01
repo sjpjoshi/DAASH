@@ -18,10 +18,10 @@ app = Flask(__name__)
 CORS(app)
 
 # Set the OpenAI API key from environment variables
-openai.api_key = os.getenv("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")
+openai.api_key = os.getenv("")
 
 # Database connection string from environment
-DATABASE_URL = os.getenv("postgresql://neondb_owner:npg_F6kPGXoq1tpa@ep-spring-credit-a5ssal2h-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require")
+DATABASE_URL = os.getenv("")
 
 # List of trusted domain extensions
 TRUSTED_EXTENSIONS = [".gov", ".org"]
