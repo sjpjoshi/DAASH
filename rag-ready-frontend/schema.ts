@@ -6,6 +6,7 @@ export const verificationTable = pgTable("verification_table", {
   queryCount: integer("query_count").notNull().default(0),
   verificationPriority: integer("verification_priority").notNull().default(0),
   commonQuery: text("common_query"),
+  content: text("content"),
 });
 
 export type InsertDocument = typeof verificationTable.$inferInsert;

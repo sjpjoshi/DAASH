@@ -18,10 +18,10 @@ app = Flask(__name__)
 CORS(app)
 
 # Set the OpenAI API key from environment variables
-openai.api_key = os.getenv("")
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 # Database connection string from environment
-DATABASE_URL = os.getenv("")
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 # List of trusted domain extensions
 TRUSTED_EXTENSIONS = [".gov", ".org"]

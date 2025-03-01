@@ -79,6 +79,7 @@ export async function POST(request: Request) {
         queryCount: 1,
         verificationPriority: 0,
         commonQuery: null,
+        content: null,
       });
 
       return NextResponse.json({

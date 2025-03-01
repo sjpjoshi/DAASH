@@ -35,6 +35,7 @@ export async function POST(request: Request) {
         queryCount: 0,
         verificationPriority: 0,
         commonQuery: null,
+        content: null,
       });
     }
 
