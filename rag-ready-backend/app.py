@@ -51,7 +51,7 @@ def get_data():
         # Convert rows to a list of dictionaries
         data = []
         for row in rows:
-            data.append({"column1": row[0], "column2": row[1], "column3": row[2]})
+            data.append({"id": row[0], "verification_level": row[1], "query_count": row[2], "verification_priority": row[3], "common_query": row[4]})
         
         cursor.close()
         conn.close()
@@ -60,6 +60,25 @@ def get_data():
     
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+# Function to interact with GPT and analyze the webpage content
+def analyze_webpage_with_gpt(text):
+    try:
+        if not text or len(text) < 100:  # Check if the extracted text is too short
+            return "Error: The extracted text is too short for analysis."
+
+        prompt = f"Please evaluate the following webpage content for factual accuracy, potential biases, and trustworthiness: {text[:4000]}"  # Trim the text if it's too long
+    
+        # Send prompt to OpenAI's GPT
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",  # or another GPT model
+            messages=[{"role": "system", "content": "You are a citation evaluator."},
+                      {"role": "user", "content": prompt}]
+        )
+        
+        return response.choices[0].message['content'].strip()  # Return GPT's analysis
+    except Exception as e:
+        return f"Error communicating with GPT: {e}"
 
 # Function to check if a webpage is from a trusted source based on its domain
 def is_trusted_source(url):
