@@ -8,18 +8,58 @@ import json
 import re
 import dotenv
 import os
+import psycopg2
 
+# Load environment variables
 dotenv.load_dotenv()
 
 # Initialize Flask app and CORS
 app = Flask(__name__)
 CORS(app)
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
+# Set the OpenAI API key from environment variables
+openai.api_key = os.getenv("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")
+
+# Database connection string from environment
+DATABASE_URL = os.getenv("postgresql://neondb_owner:npg_F6kPGXoq1tpa@ep-spring-credit-a5ssal2h-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require")
 
 # List of trusted domain extensions
 TRUSTED_EXTENSIONS = [".gov", ".org"]
 
+def get_db_connection():
+    try:
+        conn = psycopg2.connect(DATABASE_URL)
+        return conn
+    except Exception as e:
+        print(f"Error connecting to database: {e}")
+        return None
+
+@app.route('/get_data', methods=['GET'])
+def get_data():
+    try:
+        # Establish connection to the database
+        conn = get_db_connection()
+        if conn is None:
+            return jsonify({"error": "Unable to connect to the database"}), 500
+
+        cursor = conn.cursor()
+        
+        # Sample query to retrieve all rows from a table
+        cursor.execute('SELECT * FROM verification_table')
+        rows = cursor.fetchall()
+        
+        # Convert rows to a list of dictionaries
+        data = []
+        for row in rows:
+            data.append({"column1": row[0], "column2": row[1], "column3": row[2]})
+        
+        cursor.close()
+        conn.close()
+        
+        return jsonify(data)
+    
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 # Function to check if a webpage is from a trusted source based on its domain
 def is_trusted_source(url):
@@ -34,7 +74,6 @@ def is_trusted_source(url):
             return "Untrusted"
     except Exception as e:
         return f"Error checking source: {e}"
-
 
 # Function to extract text from a webpage
 def extract_text_from_webpage(url):
@@ -81,29 +120,6 @@ def extract_text_from_webpage(url):
     except Exception as e:
         return f"Error extracting text: {e}"
 
-
-# Function to interact with GPT and analyze the webpage content
-def analyze_webpage_with_gpt(text):
-    try:
-        if not text or len(text) < 100:  # Check if the extracted text is too short
-            return "Error: The extracted text is too short for analysis."
-
-        prompt = f"Please evaluate the following webpage content for factual accuracy, potential biases, and trustworthiness: {text[:4000]}"  # Trim the text if it's too long
-
-        # Send prompt to OpenAI's GPT
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",  # or another GPT model
-            messages=[
-                {"role": "system", "content": "You are a citation evaluator."},
-                {"role": "user", "content": prompt},
-            ],
-        )
-
-        return response.choices[0].message["content"].strip()  # Return GPT's analysis
-    except Exception as e:
-        return f"Error communicating with GPT: {e}"
-
-
 @app.route("/api/query", methods=["POST"])
 def query_rag():
     try:
@@ -120,14 +136,10 @@ def query_rag():
             if "Error" in webpage_text:
                 return jsonify({"error": webpage_text}), 500
 
-            # Send the extracted text to GPT for analysis
-            # analysis = analyze_webpage_with_gpt(webpage_text)
-
             # Return the analysis result along with the trust status
             response = {
                 "output": {
                     "Analysis": trust_status
-                    # "GPT_Analysis": analysis
                 }
             }
 
@@ -144,7 +156,9 @@ def query_rag():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
 @app.route("/api/health", methods=["GET"])
 def health_check():
     return jsonify({"status": "healthy"})
+
+if __name__ == '__main__':
+    app.run(debug=True)
