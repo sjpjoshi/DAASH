@@ -3,6 +3,9 @@ import { Code } from "@heroui/code";
 
 import ParticleConnections from "@/components/particleConnections";
 import { title, subtitle } from "@/components/primitives";
+import { Button } from "@heroui/button";
+import { Icon } from "@iconify/react";
+import Link from "next/link";
 
 export default function Home() {
   return (
@@ -22,13 +25,12 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="mt-8">
-          <Snippet hideCopyButton hideSymbol variant="bordered">
-            <span>
-              Get started by editing <Code color="primary">app/page.tsx</Code>
-            </span>
-          </Snippet>
-        </div>
+        <Link className="mt-16" href="/AugmentedChat">
+          <Button color="secondary" className="h-14 w-fit text-lg font-light" variant="shadow">
+            See it in action
+            <Icon className="text-lg" icon="heroicons:arrow-right" />
+          </Button>
+        </Link>
       </section>
     </>
   );
