@@ -1,9 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
 export async function GET() {
   return NextResponse.json(
     {
-      message: "Hello from the API!",
+      message: 'Hello from the API!',
       timestamp: new Date().toISOString(),
     },
     {
@@ -18,7 +18,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(
       {
-        message: "Data received successfully",
+        message: 'Data received successfully',
         data: body,
       },
       {
@@ -28,7 +28,7 @@ export async function POST(request: Request) {
   } catch (error) {
     return NextResponse.json(
       {
-        error: "Failed to process request",
+        error: 'Failed to process request',
       },
       {
         status: 400,
