@@ -15,8 +15,10 @@ export default function Home() {
           <br />
           <span className={title()}>tools worth&nbsp;</span>
           <span className={title({ color: "violet" })}>trusting</span>
+          <br />
+          <span className={title()}>with RAG-Ready</span>
           <div className={subtitle({ class: "mt-4" })}>
-            Protect against poisoning & hallucinations with RAG-Ready.
+            Protect against poisoning & hallucinations.
           </div>
         </div>
 
