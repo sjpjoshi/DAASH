@@ -16,9 +16,9 @@ export default function Home() {
           <span className={title()}>tools worth&nbsp;</span>
           <span className={title({ color: "violet" })}>trusting</span>
           <br />
-          <span className={title()}>with RAG-Ready</span>
+          <span className={title()}>with the RAG-Ready API</span>
           <div className={subtitle({ class: "mt-4" })}>
-            Protect against poisoning & hallucinations.
+            Protect your systems against <Code color="secondary">poisoning & hallucinations</Code>
           </div>
         </div>
 
