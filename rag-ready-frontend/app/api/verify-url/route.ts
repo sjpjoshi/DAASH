@@ -5,8 +5,8 @@ import { eq } from "drizzle-orm";
 
 async function checkUrlTrustworthy(url: string): Promise<boolean> {
   try {
-    // TODO: Replace with your actual AI Verification API endpoint
-    const response = await fetch('YOUR_AI_VERIFICATION_API_ENDPOINT', {
+    // Call the Flask backend API
+    const response = await fetch('http://localhost:5000/api/query', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -19,8 +19,8 @@ async function checkUrlTrustworthy(url: string): Promise<boolean> {
     }
 
     const data = await response.json();
-    // Assuming the API returns a response with a status of either "Trusted" or "Untrusted"
-    return data.status === "Trusted";
+    // Check the Analysis field from the Flask response
+    return data.output.Analysis === "Trusted";
   } catch (error) {
     console.error('Error calling AI Verification API:', error);
     throw error;
