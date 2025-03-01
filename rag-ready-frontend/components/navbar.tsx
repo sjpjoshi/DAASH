@@ -32,7 +32,7 @@ export const Navbar = () => {
         </Kbd>
       }
       labelPlacement="outside"
-      placeholder="Search the docs..."
+      placeholder="Search the API docs..."
       startContent={
         <SearchIcon className="pointer-events-none flex-shrink-0 text-base text-default-400" />
       }
