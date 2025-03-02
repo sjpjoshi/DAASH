@@ -112,14 +112,14 @@ export default function SpotCheckPage() {
           <div className="mt-4 flex justify-center gap-4">
             <Button
               color="success"
-              onClick={() => handleVerification(true)}
+              onPress={() => handleVerification(true)}
               disabled={isSubmitting}
             >
               Mark as Trusted
             </Button>
             <Button
               color="danger"
-              onClick={() => handleVerification(false)}
+              onPress={() => handleVerification(false)}
               disabled={isSubmitting}
             >
               Mark as Untrusted
