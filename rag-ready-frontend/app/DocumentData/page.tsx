@@ -128,7 +128,7 @@ export default function DocumentDataPage() {
       {/* Main content with higher z-index to appear above particles */}
       <div className="relative z-10 flex flex-col align-center items-center justify-center w-full">
         <div className="flex flex-col gap-6 min-w-[1000px]">
-          <h1 className={title()}>Document Trust Data</h1>
+          <h1 className={title()}>Document <span className={title({ color: "violet" })}>Trust</span> Data</h1>
           
           {error && (
             <div className="p-4 text-red-500 bg-red-100 rounded-lg">
@@ -182,7 +182,8 @@ export default function DocumentDataPage() {
                   value={urlToVerify}
                   onChange={(e: ChangeEvent<HTMLInputElement>) => setUrlToVerify(e.target.value)}
                 />
-                <Button 
+                <Button
+                color="secondary"
                   onClick={handleAIVerification}
                   disabled={isVerifying || !urlToVerify.trim()}
                 >
@@ -200,6 +201,7 @@ export default function DocumentDataPage() {
                   onChange={(e: ChangeEvent<HTMLInputElement>) => setManualVerifyUrl(e.target.value)}
                 />
                 <Button 
+                  color="secondary"
                   onClick={handleManualVerification}
                   disabled={isSubmitting || !manualVerifyUrl.trim()}
                 >
