@@ -2,7 +2,7 @@
 
 import type { Container, Engine } from "@tsparticles/engine";
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState, memo } from "react";
 import Particles, { initParticlesEngine } from "@tsparticles/react";
 import { loadSlim } from "@tsparticles/slim";
 
@@ -42,18 +42,26 @@ const particlesConfig = {
   detectRetina: true,
 };
 
-const ParticleConnections: React.FC<ParticleConnectionsProps> = ({ className }) => {
+const ParticleConnectionsComponent: React.FC<ParticleConnectionsProps> = ({ className }) => {
   const [init, setInit] = useState(false);
 
   // This should be run only once per application lifetime
   useEffect(() => {
+    let isMounted = true;
+
     initParticlesEngine(async (engine: Engine) => {
       // This loads the tsparticles package bundle, it's the easiest method for getting everything ready
       // Starting from v2 you can add only the features you need reducing the bundle size
       await loadSlim(engine);
     }).then(() => {
-      setInit(true);
+      if (isMounted) {
+        setInit(true);
+      }
     });
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const particlesLoaded = useCallback(async (container?: Container) => {
@@ -71,5 +79,8 @@ const ParticleConnections: React.FC<ParticleConnectionsProps> = ({ className }) 
     </div>
   );
 };
+
+// Export a memoized version of the component
+const ParticleConnections = memo(ParticleConnectionsComponent);
 
 export default ParticleConnections;

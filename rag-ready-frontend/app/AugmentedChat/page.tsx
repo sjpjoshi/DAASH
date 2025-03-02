@@ -66,24 +66,42 @@ export default function AugmentedChatPage() {
     setInput("");
     setIsLoading(true);
 
-    // In a real implementation, you would send the message to an API
-    // along with any context URLs or selected documents
+    try {
+      // Call the actual API endpoint
+      const response = await fetch("/api/sendChatMessage", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          prompt: input,
+          trustedUrls: selectedDocs,
+          untrustedUrls: contextUrls,
+        }),
+      });
 
-    // For now, we'll simulate a response
-    setTimeout(() => {
-      const contextInfo =
-        [...contextUrls, ...selectedDocs].length > 0
-          ? `I've considered the ${contextUrls.length + selectedDocs.length} sources you provided.`
-          : "";
+      if (!response.ok) {
+        throw new Error(`Error: ${response}`);
+      }
+
+      const data = await response.json();
 
       const assistantMessage = {
         role: "assistant" as const,
-        content: `This is a simulated response. ${contextInfo} In a real implementation, this would be a response from an AI model that has access to the context you provided.`,
+        content: data.response || "Sorry, I couldn't generate a response.",
       };
 
       setMessages(prev => [...prev, assistantMessage]);
+    } catch (error) {
+      console.error("Error sending message:", error);
+      const errorMessage = {
+        role: "assistant" as const,
+        content: "Sorry, there was an error processing your request. Please try again.",
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   const handleAddUrl = () => {
@@ -145,72 +163,74 @@ export default function AugmentedChatPage() {
           Chat with <span className={title({ color: "violet" })}>Context</span>
         </h1>
 
-        <div className="flex flex-grow flex-col overflow-hidden rounded-lg bg-content1 shadow-md">
+        <div className="flex max-h-[68vh] flex-grow flex-col overflow-hidden rounded-lg bg-content1 shadow-md">
           {/* Chat messages area */}
-          <div className="mb-8 flex-grow overflow-y-auto p-4">
-            {messages.map((message, index) => (
-              <div
-                key={index}
-                className={`mb-4 ${message.role === "assistant" ? "bg-secondary-50 dark:bg-secondary-900/20" : "bg-content2"} rounded-lg p-3`}
-              >
-                <div className="mb-1 font-semibold">
-                  {message.role === "assistant" ? "Assistant" : "You"}
+          <div className="flex flex-grow flex-col overflow-hidden">
+            <div className="max-h-[50vh] flex-grow overflow-y-auto p-4 scrollbar-hide">
+              {messages.map((message, index) => (
+                <div
+                  key={index}
+                  className={`mb-4 ${message.role === "assistant" ? "bg-secondary-50 dark:bg-secondary-900/20" : "bg-content2"} rounded-lg p-3`}
+                >
+                  <div className="mb-1 font-semibold">
+                    {message.role === "assistant" ? "Assistant" : "You"}
+                  </div>
+                  <div className="whitespace-pre-wrap">{message.content}</div>
                 </div>
-                <div className="whitespace-pre-wrap">{message.content}</div>
-              </div>
-            ))}
-            {isLoading && (
-              <div className="mb-4 rounded-lg bg-secondary-50 p-3 dark:bg-secondary-900/20">
-                <div className="mb-1 font-semibold">Assistant</div>
-                <div className="flex items-center">
-                  <div className="mr-1 h-2 w-2 animate-bounce rounded-full bg-secondary"></div>
-                  <div
-                    className="mr-1 h-2 w-2 animate-bounce rounded-full bg-secondary"
-                    style={{ animationDelay: "0.2s" }}
-                  ></div>
-                  <div
-                    className="h-2 w-2 animate-bounce rounded-full bg-secondary"
-                    style={{ animationDelay: "0.4s" }}
-                  ></div>
+              ))}
+              {isLoading && (
+                <div className="mb-4 rounded-lg bg-secondary-50 p-3 dark:bg-secondary-900/20">
+                  <div className="mb-1 font-semibold">Assistant</div>
+                  <div className="flex items-center">
+                    <div className="mr-1 h-2 w-2 animate-bounce rounded-full bg-secondary"></div>
+                    <div
+                      className="mr-1 h-2 w-2 animate-bounce rounded-full bg-secondary"
+                      style={{ animationDelay: "0.2s" }}
+                    ></div>
+                    <div
+                      className="h-2 w-2 animate-bounce rounded-full bg-secondary"
+                      style={{ animationDelay: "0.4s" }}
+                    ></div>
+                  </div>
+                </div>
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* Display selected context */}
+            {(contextUrls.length > 0 || selectedDocs.length > 0) && (
+              <div className="max-h-[15vh] border-t border-divider p-3">
+                <h4 className="mb-1 text-xs font-medium">Active Context:</h4>
+                <div className="max-h-[calc(15vh-30px)] overflow-y-auto scrollbar-hide">
+                  {contextUrls.map(url => (
+                    <div
+                      key={url}
+                      className="mb-1 flex items-center rounded bg-content2 px-2 py-1 text-xs"
+                    >
+                      <span className="flex-grow truncate">{url}</span>
+                      <button onClick={() => handleRemoveUrl(url)} className="ml-2 text-danger">
+                        <Icon icon="heroicons:x-mark" />
+                      </button>
+                    </div>
+                  ))}
+                  {selectedDocs.map(docId => (
+                    <div
+                      key={docId}
+                      className="mb-1 flex items-center rounded bg-content2 px-2 py-1 text-xs"
+                    >
+                      <span className="flex-grow truncate">{docId}</span>
+                      <button
+                        onClick={() => handleToggleDocument(docId)}
+                        className="ml-2 text-danger"
+                      >
+                        <Icon icon="heroicons:x-mark" />
+                      </button>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
-            <div ref={messagesEndRef} />
           </div>
-
-          {/* Display selected context */}
-          {(contextUrls.length > 0 || selectedDocs.length > 0) && (
-            <div className="border-t border-divider p-3">
-              <h4 className="mb-1 text-xs font-medium">Active Context:</h4>
-              <div className="max-h-24 overflow-y-auto">
-                {contextUrls.map(url => (
-                  <div
-                    key={url}
-                    className="mb-1 flex items-center rounded bg-content2 px-2 py-1 text-xs"
-                  >
-                    <span className="flex-grow truncate">{url}</span>
-                    <button onClick={() => handleRemoveUrl(url)} className="ml-2 text-danger">
-                      <Icon icon="heroicons:x-mark" />
-                    </button>
-                  </div>
-                ))}
-                {selectedDocs.map(docId => (
-                  <div
-                    key={docId}
-                    className="mb-1 flex items-center rounded bg-content2 px-2 py-1 text-xs"
-                  >
-                    <span className="flex-grow truncate">{docId}</span>
-                    <button
-                      onClick={() => handleToggleDocument(docId)}
-                      className="ml-2 text-danger"
-                    >
-                      <Icon icon="heroicons:x-mark" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
 
           {/* Input area */}
           <div className="border-t border-divider p-3">
@@ -312,7 +332,7 @@ export default function AugmentedChatPage() {
                                       {trustedDocs.map(doc => (
                                         <ListboxItem key={doc.id} textValue={doc.id}>
                                           <div className="flex w-full items-center justify-between">
-                                            <span className="max-w-[220px] truncate text-left text-sm sm:max-w-[250px]">
+                                            <span className="max-w-[220px] truncate text-left text-sm sm:max-w-[220px]">
                                               {doc.id}
                                             </span>
                                             <span className="ml-2 text-nowrap rounded bg-secondary-100 px-1 text-right text-xs dark:bg-secondary-900/30">
