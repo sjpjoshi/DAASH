@@ -47,6 +47,15 @@ export default function AugmentedChatPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  //set a few default external urls to demo with
+  useEffect(() => {
+    const defaultUrls = [
+      "http://web.archive.org/web/20220412064207/https://www.theflatearthsociety.org/forum/index.php?topic=71901.0",
+      "https://wiki.tfes.org/Experimental_Evidence",
+    ];
+    setContextUrls(defaultUrls);
+  }, []);
+
   const fetchTrustedDocs = async () => {
     try {
       const response = await fetch(`/api/getTrustedDocs?level=${trustLevel}`);

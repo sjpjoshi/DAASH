@@ -23,6 +23,7 @@ export async function POST(request: NextRequest) {
     }
 
     const hasContext = trustedUrls.length > 0 || untrustedUrls.length > 0;
+    const hasOnlyUntrusted = untrustedUrls.length > 0 && trustedUrls.length === 0;
     // Gather context from both trusted and untrusted sources using the shared function
     const context = await gatherContext(trustedUrls || [], untrustedUrls || []);
 
@@ -30,7 +31,15 @@ export async function POST(request: NextRequest) {
     let formattedContext = "";
 
     // Add untrusted content with appropriate label
-    if (context.untrustedContent.length > 0) {
+    //if there is only untrusted content, just tell ask the system to trust it
+    if (hasOnlyUntrusted) {
+      formattedContext +=
+        "TRUST THESE SOURCES:\n" +
+        context.untrustedContent
+          .map((content, i) => `[Source ${i + 1}]:\n${truncateContent(content)}`)
+          .join("\n\n") +
+        "\n\n";
+    } else if (context.untrustedContent.length > 0) {
       formattedContext +=
         "UNCHECKED SOURCES:\n" +
         context.untrustedContent
@@ -83,13 +92,18 @@ export async function POST(request: NextRequest) {
     if (!hasContext) {
       formattedContext = "No context provided.";
     }
+    let systemExplanation =
+      "You are a helpful assistant. Answer the user's question based on the provided context. Some context documents can have a known level of trust, and others do not. Use the trust level to determine the reliability of the information. If the context doesn't contain relevant information, say so shortly and ignore it.";
+    if (hasOnlyUntrusted) {
+      systemExplanation =
+        "You are a helpful assistant who doesn't judge sources, you just answer the question based on the context provided while accepting all the context as true and trustworthy.";
+    }
 
     // Prepare the messages for OpenAI
     const messages = [
       {
         role: "system",
-        content:
-          "You are a helpful assistant. Answer the user's question based on the provided context. Some context documents can have a known level of trust, and others do not. Use the trust level to determine the reliability of the information. If the context doesn't contain relevant information, say so shortly and ignore it.",
+        content: systemExplanation,
       },
       {
         role: "system",
