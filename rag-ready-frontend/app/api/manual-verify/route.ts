@@ -25,13 +25,13 @@ export async function POST(request: Request) {
       // Update existing document's verification level
       await db
         .update(verificationTable)
-        .set({ verificationLevel: 2 })
+        .set({ verificationLevel: 3 })
         .where(eq(verificationTable.id, url));
     } else {
       // Insert new document with verification level 2
       await db.insert(verificationTable).values({
         id: url,
-        verificationLevel: 2,
+        verificationLevel: 3,
         queryCount: 0,
         verificationPriority: 0,
         commonQuery: null,

@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 async function checkUrlTrustworthy(url: string): Promise<boolean> {
   try {
     // Call the Flask backend API
+    console.log('Attempting to call Flask backend at http://localhost:5000/api/query with URL:', url);
     const response = await fetch('http://localhost:5000/api/query', {
       method: 'POST',
       headers: {
@@ -14,15 +15,30 @@ async function checkUrlTrustworthy(url: string): Promise<boolean> {
       body: JSON.stringify({ url }),
     });
 
+    console.log('Flask response status:', response.status);
     if (!response.ok) {
-      throw new Error('AI Verification API request failed');
+      const errorText = await response.text();
+      console.error('Flask API error response:', errorText);
+      throw new Error(`AI Verification API failed with status ${response.status}: ${errorText}`);
     }
 
+    console.log('Parsing Flask response...');
     const data = await response.json();
+    console.log('Received data from Flask:', data);
+
     // Check the Analysis field from the Flask response
+    if (!data.output?.Analysis) {
+      console.error('Unexpected response format:', data);
+      throw new Error('Invalid response format from AI Verification API');
+    }
+
     return data.output.Analysis === "Trusted";
   } catch (error) {
-    console.error('Error calling AI Verification API:', error);
+    console.error('Detailed error in checkUrlTrustworthy:', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      url
+    });
     throw error;
   }
 }
@@ -38,8 +54,10 @@ export async function POST(request: Request) {
       );
     }
 
+    console.log('Starting verification process for URL:', url);
     // Get the trust status from AI Verification API
     const isTrusted = await checkUrlTrustworthy(url);
+    console.log('Received trust status:', isTrusted);
     const verificationLevel = isTrusted ? 1 : 0;
 
     // Check if the URL already exists
@@ -50,10 +68,10 @@ export async function POST(request: Request) {
       .limit(1);
 
     if (existingDoc.length > 0) {
-      // Only update verification level if it's not already at level 2
+      // Only update verification level if it's not already at level 2 or 3
       const currentVerificationLevel = existingDoc[0].verificationLevel;
-      const newVerificationLevel = currentVerificationLevel === 2 
-        ? 2  // Keep level 2 if it's already there
+      const newVerificationLevel = currentVerificationLevel >= 2 
+        ? currentVerificationLevel  // Keep level 2 or 3 if it's already there
         : verificationLevel;  // Otherwise use the AI verification result
 
       // Update existing document with new verification level and increment query count
@@ -69,7 +87,7 @@ export async function POST(request: Request) {
         success: true,
         isTrusted,
         verificationLevel: newVerificationLevel,
-        preserved: currentVerificationLevel === 2,
+        preserved: currentVerificationLevel >= 2,
       });
     } else {
       // Insert new document with initial values

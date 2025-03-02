@@ -7,6 +7,7 @@ import { useState, useEffect } from "react";
 import type { SelectDocument } from "@/schema";
 import { ChangeEvent } from "react";
 import ParticleConnections from "@/components/particleConnections";
+import { useRouter } from "next/navigation";
 
 export default function DocumentDataPage() {
   const [documents, setDocuments] = useState<SelectDocument[]>([]);
@@ -16,6 +17,7 @@ export default function DocumentDataPage() {
   const [isVerifying, setIsVerifying] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchDocuments = async () => {
@@ -121,6 +123,28 @@ export default function DocumentDataPage() {
     }
   };
 
+  const handleSpotCheck = async (doc: SelectDocument) => {
+    try {
+      const response = await fetch('/api/spot-check/start', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ url: doc.id }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to initiate spot check');
+      }
+
+      const data = await response.json();
+      router.push(`/SpotCheck?id=${encodeURIComponent(doc.id)}&analysis=${encodeURIComponent(data.gptAnalysis)}`);
+    } catch (error) {
+      console.error('Error initiating spot check:', error);
+      setError(error instanceof Error ? error.message : 'Failed to start spot check');
+    }
+  };
+
   return (
     <div className="relative flex flex-col align-center items-center justify-center w-full">
       <ParticleConnections className="absolute inset-0 z-0"/>
@@ -146,6 +170,7 @@ export default function DocumentDataPage() {
                     <th className="py-2 px-4 text-center">Query Count</th>
                     <th className="py-2 px-4 text-center">Verification Priority</th>
                     <th className="py-2 px-4 text-center">Common Query</th>
+                    <th className="py-2 px-4 text-center">Spot Check</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -165,6 +190,17 @@ export default function DocumentDataPage() {
                         <td className="py-2 px-4">{doc.queryCount}</td>
                         <td className="py-2 px-4">{doc.verificationPriority}</td>
                         <td className="py-2 px-4">{doc.commonQuery || "NULL"}</td>
+                        <td className="py-2 px-4">
+                          {doc.content && (
+                            <Button
+                              color="secondary"
+                              size="sm"
+                              onClick={() => handleSpotCheck(doc)}
+                            >
+                              Spot Check
+                            </Button>
+                          )}
+                        </td>
                       </tr>
                     ))
                   )}

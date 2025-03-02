@@ -1,6 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
-import openai
+from openai import OpenAI
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import json
@@ -18,8 +18,8 @@ dotenv.load_dotenv()
 app = Flask(__name__)
 CORS(app)
 
-# Set the OpenAI API key from environment variables
-openai.api_key = os.getenv("OPENAI_API_KEY")
+# Initialize OpenAI client
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # Database connection string from environment
 DATABASE_URL = os.getenv("DATABASE_URL")
@@ -58,14 +58,14 @@ def analyze_webpage_with_gpt(text):
             return "Error: The extracted text is too short for analysis."
 
         prompt = f"Evaluate the following webpage for factual accuracy and trustworthiness: {text[:4000]}"
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": "You are a fact-checking assistant."},
                 {"role": "user", "content": prompt}
             ]
         )
-        return response.choices[0].message['content'].strip()
+        return response.choices[0].message.content.strip()
     except Exception as e:
         return f"Error communicating with GPT: {e}"
 
@@ -76,7 +76,7 @@ def get_verified_documents():
         return []
     
     cursor = conn.cursor()
-    cursor.execute('SELECT content FROM content')
+    cursor.execute('SELECT content FROM verification_table WHERE content IS NOT NULL')
     documents = [row[0] for row in cursor.fetchall()]
     cursor.close()
     conn.close()
@@ -84,10 +84,16 @@ def get_verified_documents():
 
 # Compute similarity and retrieve top 5 matches
 def compute_similarity(webpage_text, verified_docs, k=5):
+    if not verified_docs:  # If the list is empty
+        return []     # Return empty list for no matches
+    
     vectorizer = TfidfVectorizer()
     all_texts = [webpage_text] + verified_docs
     tfidf_matrix = vectorizer.fit_transform(all_texts)
     similarities = cosine_similarity(tfidf_matrix[0:1], tfidf_matrix[1:]).flatten()
+    
+    # Make sure k isn't larger than the number of documents
+    k = min(k, len(verified_docs))
     
     top_k_indices = similarities.argsort()[-k:][::-1]
     top_k_similarities = [(verified_docs[i], similarities[i]) for i in top_k_indices]
@@ -98,14 +104,14 @@ def compute_similarity(webpage_text, verified_docs, k=5):
 def verify_with_trusted_docs(webpage_text, trusted_docs):
     try:
         prompt = f"Given the following trusted documents:\n{trusted_docs}\n\nDoes this new document align with them? {webpage_text[:4000]}"
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": "You are a fact-checking assistant ensuring document congruency."},
                 {"role": "user", "content": prompt}
             ]
         )
-        return response.choices[0].message['content'].strip()
+        return response.choices[0].message.content.strip()
     except Exception as e:
         return f"Error communicating with GPT: {e}"
 
@@ -134,12 +140,27 @@ def query_rag():
         congruency_analysis = verify_with_trusted_docs(webpage_text, trusted_docs)
         
         similarity_check_passed = all(sim >= 0.7 for _, sim in top_matches)
-        congruency_check_passed = "consistent" in congruency_analysis.lower()
+        #if similarity check is empty, then skip over the congruency check
+        if similarity_check_passed:
+            congruency_check_passed = "consistent" in congruency_analysis.lower()
+        else:
+            congruency_check_passed = True
+            similarity_check_passed = True
         
         if similarity_check_passed and congruency_check_passed:
-            result = {"Analysis": "Trusted", "GPT_Analysis": gpt_analysis}
+            result = {
+                "output": {
+                    "Analysis": "Trusted",
+                    "GPT_Analysis": gpt_analysis
+                }
+            }
         else:
-            result = {"Analysis": "Untrusted", "GPT_Analysis": gpt_analysis}
+            result = {
+                "output": {
+                    "Analysis": "Untrusted",
+                    "GPT_Analysis": gpt_analysis
+                }
+            }
         
         # Store result as JSON
         with open("verification_result.json", "w") as f:
