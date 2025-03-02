@@ -10,7 +10,7 @@ export default function Home() {
   return (
     <>
       <ParticleConnections className="absolute inset-0 z-0" />
-      <section className="relative z-10 flex flex-col items-center justify-center gap-4 py-8 md:py-10">
+      <section className="relative z-10 flex h-full w-full flex-col items-center justify-center gap-4 py-8 md:py-10">
         <div className="inline-block max-w-xl justify-center text-center">
           <span className={title()}>Make your&nbsp;</span>
           <span className={title()}>RAG&nbsp;</span>
