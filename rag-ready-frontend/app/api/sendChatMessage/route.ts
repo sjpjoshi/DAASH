@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
       formattedContext +=
         "UNCHECKED SOURCES:\n" +
         context.untrustedContent
-          .map((content, i) => `[Unchecked Source ${i + 1}]:\n${content}`)
+          .map((content, i) => `[Unchecked Source ${i + 1}]:\n${truncateContent(content)}`)
           .join("\n\n") +
         "\n\n";
     }
@@ -44,7 +44,9 @@ export async function POST(request: NextRequest) {
       formattedContext +=
         "UNKNOWN TRUST LEVEL SOURCES:\n" +
         context.level0Content
-          .map((content, i) => `[Unknown Trust Level Source ${i + 1}]:\n${content}`)
+          .map(
+            (content, i) => `[Unknown Trust Level Source ${i + 1}]:\n${truncateContent(content)}`
+          )
           .join("\n\n") +
         "\n\n";
     }
@@ -53,7 +55,7 @@ export async function POST(request: NextRequest) {
       formattedContext +=
         "MACHINE CHECKED SOURCES:\n" +
         context.level1Content
-          .map((content, i) => `[Machine Checked Source ${i + 1}]:\n${content}`)
+          .map((content, i) => `[Machine Checked Source ${i + 1}]:\n${truncateContent(content)}`)
           .join("\n\n") +
         "\n\n";
     }
@@ -62,7 +64,10 @@ export async function POST(request: NextRequest) {
       formattedContext +=
         "AI ASSISTED SPOT CHECKED SOURCES:\n" +
         context.level2Content
-          .map((content, i) => `[AI Assisted Spot Checked Source ${i + 1}]:\n${content}`)
+          .map(
+            (content, i) =>
+              `[AI Assisted Spot Checked Source ${i + 1}]:\n${truncateContent(content)}`
+          )
           .join("\n\n") +
         "\n\n";
     }
@@ -71,7 +76,7 @@ export async function POST(request: NextRequest) {
       formattedContext +=
         "HUMAN VERIFIED SOURCES:\n" +
         context.level3Content
-          .map((content, i) => `[Human Verified Source ${i + 1}]:\n${content}`)
+          .map((content, i) => `[Human Verified Source ${i + 1}]:\n${truncateContent(content)}`)
           .join("\n\n");
     }
 
@@ -228,4 +233,10 @@ async function gatherContext(
     level2Content,
     level3Content,
   };
+}
+
+// Helper function to truncate content to a reasonable length
+function truncateContent(content: string, maxLength: number = 4000): string {
+  if (content.length <= maxLength) return content;
+  return content.substring(0, maxLength) + "... [content truncated due to length]";
 }
