@@ -1,3 +1,4 @@
 rag-ready-frontend/.env
 rag-ready-backend/.env
 rag-ready-backend/venv
+/rag-ready-backend/__pycache__

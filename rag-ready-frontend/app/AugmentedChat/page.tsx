@@ -111,8 +111,11 @@ export default function AugmentedChatPage() {
       // Validate URL format
       new URL(urlInput);
 
-      if (!contextUrls.includes(urlInput)) {
+      // Check if URL exists in either contextUrls or selectedDocs
+      if (!contextUrls.includes(urlInput) && !selectedDocs.includes(urlInput)) {
         setContextUrls(prev => [...prev, urlInput]);
+      } else {
+        alert("This URL is already added as context");
       }
       setUrlInput("");
     } catch (e) {
@@ -153,6 +156,11 @@ export default function AugmentedChatPage() {
       default:
         return "Unknown";
     }
+  };
+
+  const getDocumentTrustLevel = (docId: string): number | null => {
+    const doc = trustedDocs.find(doc => doc.id === docId);
+    return doc ? doc.trustLevel : null;
   };
 
   return (
@@ -208,6 +216,9 @@ export default function AugmentedChatPage() {
                       className="mb-1 flex items-center rounded bg-content2 px-2 py-1 text-xs"
                     >
                       <span className="flex-grow truncate">{url}</span>
+                      <span className="ml-2 text-nowrap rounded bg-gray-100 px-1 text-right text-xs dark:bg-secondary-900/30">
+                        External
+                      </span>
                       <button onClick={() => handleRemoveUrl(url)} className="ml-2 text-danger">
                         <Icon icon="heroicons:x-mark" />
                       </button>
@@ -219,6 +230,9 @@ export default function AugmentedChatPage() {
                       className="mb-1 flex items-center rounded bg-content2 px-2 py-1 text-xs"
                     >
                       <span className="flex-grow truncate">{docId}</span>
+                      <span className="ml-2 text-nowrap rounded bg-secondary-100 px-1 text-right text-xs dark:bg-secondary-900/30">
+                        {getTrustLevelLabel(getDocumentTrustLevel(docId) || 0)}
+                      </span>
                       <button
                         onClick={() => handleToggleDocument(docId)}
                         className="ml-2 text-danger"
@@ -324,7 +338,28 @@ export default function AugmentedChatPage() {
                                       selectedKeys={selectedDocs}
                                       onSelectionChange={keys => {
                                         if (keys !== "all") {
-                                          setSelectedDocs(Array.from(keys) as string[]);
+                                          const newSelectedDocs = Array.from(keys) as string[];
+
+                                          // Check for any docs that are already in contextUrls
+                                          const duplicates = newSelectedDocs.filter(doc =>
+                                            contextUrls.includes(doc)
+                                          );
+
+                                          if (duplicates.length > 0) {
+                                            // Alert about duplicates
+                                            alert(
+                                              `Some documents are already added as external context: ${duplicates.join(", ")}`
+                                            );
+
+                                            // Remove duplicates from selection
+                                            const filteredDocs = newSelectedDocs.filter(
+                                              doc => !contextUrls.includes(doc)
+                                            );
+                                            setSelectedDocs(filteredDocs);
+                                          } else {
+                                            // No duplicates, proceed normally
+                                            setSelectedDocs(newSelectedDocs);
+                                          }
                                         }
                                       }}
                                       className="max-h-full"
