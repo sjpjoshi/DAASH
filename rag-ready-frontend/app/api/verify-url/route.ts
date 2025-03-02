@@ -55,7 +55,7 @@ export async function POST(request: Request) {
     }
 
     console.log('Starting verification process for URL:', url);
-    // Get the trust status from AI Verification API
+
     const response = await fetch('http://localhost:5000/api/query', {
       method: 'POST',
       headers: {
