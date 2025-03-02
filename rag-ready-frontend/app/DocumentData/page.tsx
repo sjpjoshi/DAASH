@@ -34,10 +34,10 @@ export default function DocumentDataPage() {
           throw new TypeError("Response was not JSON");
         }
 
-        const text = await response.text(); // Get the raw text first
+        const text = await response.text(); 
         console.log('Raw response:', text); // Debug log
         
-        const data = JSON.parse(text); // Parse it manually
+        const data = JSON.parse(text); 
         
         if (!Array.isArray(data)) {
           throw new TypeError('Expected an array of documents');
