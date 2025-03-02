@@ -152,14 +152,16 @@ def query_rag():
                 "output": {
                     "Analysis": "Trusted",
                     "GPT_Analysis": gpt_analysis
-                }
+                },
+                "content": webpage_text
             }
         else:
             result = {
                 "output": {
                     "Analysis": "Untrusted",
                     "GPT_Analysis": gpt_analysis
-                }
+                },
+                "content": webpage_text
             }
         
         # Store result as JSON

@@ -13,8 +13,8 @@ export default function SpotCheckPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const documentId = searchParams.get('id');
-  const gptAnalysis = searchParams.get('analysis');
   const [documentContent, setDocumentContent] = useState<string>("");
+  const [gptAnalysis, setGptAnalysis] = useState<string>("");
 
   useEffect(() => {
     const fetchDocumentContent = async () => {
@@ -42,6 +42,7 @@ export default function SpotCheckPage() {
         }
         
         setDocumentContent(data.content);
+        setGptAnalysis(data.gptAnalysis || '');
       } catch (error) {
         console.error('Error fetching document content:', error);
         setError(error instanceof Error ? error.message : 'Failed to fetch document content');

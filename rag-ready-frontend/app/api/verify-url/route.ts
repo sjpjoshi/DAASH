@@ -56,8 +56,20 @@ export async function POST(request: Request) {
 
     console.log('Starting verification process for URL:', url);
     // Get the trust status from AI Verification API
-    const isTrusted = await checkUrlTrustworthy(url);
-    console.log('Received trust status:', isTrusted);
+    const response = await fetch('http://localhost:5000/api/query', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ url }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`AI Verification API failed with status ${response.status}`);
+    }
+
+    const data = await response.json();
+    const isTrusted = data.output.Analysis === "Trusted";
     const verificationLevel = isTrusted ? 1 : 0;
 
     // Check if the URL already exists
@@ -80,6 +92,8 @@ export async function POST(request: Request) {
         .set({
           verificationLevel: newVerificationLevel,
           queryCount: existingDoc[0].queryCount + 1,
+          content: data.content,
+          gptAnalysis: data.output.GPT_Analysis,
         })
         .where(eq(verificationTable.id, url));
 
@@ -97,7 +111,8 @@ export async function POST(request: Request) {
         queryCount: 1,
         verificationPriority: 0,
         commonQuery: null,
-        content: null,
+        content: data.content,
+        gptAnalysis: data.output.GPT_Analysis,
       });
 
       return NextResponse.json({

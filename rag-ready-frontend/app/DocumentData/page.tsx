@@ -125,20 +125,7 @@ export default function DocumentDataPage() {
 
   const handleSpotCheck = async (doc: SelectDocument) => {
     try {
-      const response = await fetch('/api/spot-check/start', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ url: doc.id }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to initiate spot check');
-      }
-
-      const data = await response.json();
-      router.push(`/SpotCheck?id=${encodeURIComponent(doc.id)}&analysis=${encodeURIComponent(data.gptAnalysis)}`);
+      router.push(`/SpotCheck?id=${encodeURIComponent(doc.id)}`);
     } catch (error) {
       console.error('Error initiating spot check:', error);
       setError(error instanceof Error ? error.message : 'Failed to start spot check');
